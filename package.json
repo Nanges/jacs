@@ -1,0 +1,31 @@
+{
+  "name": "jacs",
+  "version": "0.0.1",
+  "description": "Just Another Cache System",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Nanges/jacs.git"
+  },
+  "keywords": [
+    "cache",
+    "rxjs",
+    "typescript"
+  ],
+  "author": "Nanges",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Nanges/jacs/issues"
+  },
+  "homepage": "https://github.com/Nanges/jacs#readme",
+  "dependencies": {
+    "rxjs": "^6.3.3"
+  },
+  "devDependencies": {
+    "@types/jest": "^23.3.5",
+    "jest": "^23.6.0"
+  }
+}
