@@ -1,7 +1,7 @@
 import { assert } from "chai";
 import { CacheContent } from "../src/cache-content";
 import { of, Observable } from "rxjs";
-import { delay, mergeMap, tap } from "rxjs/operators";
+import { delay, mergeMap, tap, ignoreElements } from "rxjs/operators";
 
 describe('Cache content', () => {
 
@@ -12,6 +12,16 @@ describe('Cache content', () => {
     });
 
     describe('get() method', () => {
+
+        it('should return expected data', (done) => {
+
+            cacheContent.get(of(2))
+                .subscribe(v => {
+                    assert.equal(v, 2);
+                    done();
+                });
+        })
+
         it('should cache the value of the first observable parameter', (done) => {
             cacheContent.get(of(2))
                 .pipe(
@@ -24,9 +34,33 @@ describe('Cache content', () => {
                 });
         });
 
+        it('should return observable not equal to source', () => {
+            let counter = 0;
+            const source = Observable.create(e => e.next(++counter));
+            const cC = cacheContent.get(source);
+
+            assert.notEqual(source, cC);
+        })
+
+        it('should return observable using source once', (done) => {
+            let counter = 0;
+            const source = Observable.create(e => e.next(++counter));
+            const cC = cacheContent.get(source);
+
+            cC.subscribe(v => {
+                assert.equal(v, 1);
+            });
+
+            cC.pipe(delay(20))
+            .subscribe(v => {
+                assert.equal(v, 1);
+                done();
+            })
+        })
+
         it('should use inflight observable feature', (done) => {
             let counter = 0;
-            const source = Observable.create(e => e.next(++counter)).pipe(delay(50));
+            const source = Observable.create(e => e.next(++counter)).pipe(delay(10));
 
             cacheContent.get(source).subscribe(v => {
                 assert.equal(v, 1);
@@ -34,7 +68,7 @@ describe('Cache content', () => {
 
             cacheContent.get(source).subscribe(v => {
                 assert.equal(v, 1);
-                done();
+                setTimeout(() => done(), 10);
             });
         });
     });
@@ -51,6 +85,23 @@ describe('Cache content', () => {
                     assert.equal(v, 4);
                     done();
                 });
+        });
+
+        it('should use source twice when invalidation between', (done) => {
+            let counter = 0;
+            const source = Observable.create(e => e.next(++counter));
+            const cC = cacheContent.get(source);
+
+            cC.subscribe(v => {
+                assert.equal(v, 1);
+                cacheContent.invalidate();
+            });
+
+            cC.pipe(delay(20))
+            .subscribe(v => {
+                assert.equal(v, 2);
+                done();
+            })
         });
     });
 });

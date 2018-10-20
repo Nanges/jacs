@@ -1,10 +1,10 @@
 import { Observable, of, Subject } from "rxjs";
-import { tap } from 'rxjs/operators';
+import { tap, mergeMap } from 'rxjs/operators';
 
 export class CacheContent{
 
     private cache:any;
-    private invalid:boolean;
+    private valid:boolean;
     private subject:Subject<any>;
 
     /**
@@ -15,26 +15,29 @@ export class CacheContent{
     }
 
     public get(source:Observable<any>):Observable<any>{
+        return of({}).pipe(
+            mergeMap(() => {
+                if(this.valid){
+                    return of(this.cache);
+                }
 
-        if(!this.invalid){
-            return of(this.cache);
-        }
+                if(this.subject == null){
+                    this.subject = new Subject();
+                    return source.pipe(tap(c => this.updateCache(c)));
+                }
 
-        if(this.subject == null){
-            this.subject = new Subject();
-            return source.pipe(tap(d => this.updateCache(d)));    
-        }
-
-        return this.subject.asObservable();
+                return this.subject.asObservable();
+            })
+        );
     }
 
     public invalidate():void{
-        this.invalid = true;
+        this.valid = false;
     }
 
     private updateCache(content:any){
         this.cache = content;
-        this.invalid = false;
+        this.valid = true;
         this.notifyInflightObservers(content);
     }
 
