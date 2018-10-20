@@ -71,6 +71,21 @@ describe('Cache content', () => {
                 setTimeout(() => done(), 10);
             });
         });
+
+        it('should use inflight observable feature when multiple subscriptions on returned source', (done) => {
+            let counter = 0;
+            const source = Observable.create(e => e.next(++counter)).pipe(delay(10));
+            const cC = cacheContent.get(source);
+
+            cC.subscribe(v => {
+                assert.equal(v, 1);
+            });
+
+            cC.subscribe(v => {
+                assert.equal(v, 1);
+                setTimeout(() => done(), 10);
+            });
+        });
     });
 
     describe('cache invalidation', () => {
