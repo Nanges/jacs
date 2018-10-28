@@ -3,20 +3,16 @@ import { tap, mergeMap } from 'rxjs/operators';
 
 export class CacheContent{
 
-    
     private valid:boolean;
     private subject:Subject<any>;
 
-    /**
-     *
-     */
     constructor(
         private cache:any = null,
     ) {
         this.valid = (this.cache != null);
     }
 
-    public get(source:Observable<any>):Observable<any>{
+    public get<T>(source:Observable<T>):Observable<T>{
         return of({}).pipe(
             mergeMap(() => {
                 if(this.valid){

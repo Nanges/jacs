@@ -2,86 +2,86 @@ import { assert } from "chai";
 import { CacheContent } from "../src/cache-content";
 import { of, Observable } from "rxjs";
 import { delay, mergeMap, tap, ignoreElements } from "rxjs/operators";
+import { MockService, Operation } from "./mock-service";
 
 describe('Cache content', () => {
 
     let cacheContent:CacheContent;
+    let service:MockService;
 
     beforeEach(() => {
         cacheContent = new CacheContent();
+        service = new MockService();
     });
 
     describe('get() method', () => {
 
         it('should return expected data', (done) => {
-            cacheContent.get(of(2))
+            cacheContent.get(service.getValue(0))
                 .subscribe(v => {
-                    assert.equal(v, 2);
+                    assert.equal(v.data.name, 'John');
                     done();
                 });
         })
 
         it('should cache the value of the first observable parameter', (done) => {
-            cacheContent.get(of(2))
+            cacheContent.get(service.getValue(0))
                 .pipe(
-                    mergeMap(() => cacheContent.get(of(4)))
+                    mergeMap(() => cacheContent.get(service.getValue(1)))
                 )
                 .subscribe(v => {
-                    assert.notEqual(v, 4);
-                    assert.equal(v, 2);
+                    assert.notEqual(v.data.name, 'Jack');
+                    assert.equal(v.data.name, 'John');
                     done();
                 });
         });
 
         it('should return observable not equal to source', () => {
-            let counter = 0;
-            const source = Observable.create(e => e.next(++counter));
-            const cC = cacheContent.get(source);
+            const src$ = service.getValue(0);
+            const cC$ = cacheContent.get(src$);
 
-            assert.notEqual(source, cC);
+            assert.notEqual(src$, cC$);
         })
 
         it('should return observable using source once', (done) => {
-            let counter = 0;
-            const source = Observable.create(e => e.next(++counter));
+            const source = service.getValue(0);
             const cC = cacheContent.get(source);
 
             cC.subscribe(v => {
-                assert.equal(v, 1);
+                assert.equal(v.id, 1);
             });
 
             cC.pipe(delay(20))
             .subscribe(v => {
-                assert.equal(v, 1);
+                assert.equal(v.id, 1);
                 done();
             })
         })
 
         it('should use inflight observable feature', (done) => {
-            let counter = 0;
-            const source = Observable.create(e => e.next(++counter)).pipe(delay(10));
+            const source = service.getValue(1, 10);
 
             cacheContent.get(source).subscribe(v => {
-                assert.equal(v, 1);
+                assert.equal(v.id, 1);
             });
 
             cacheContent.get(source).subscribe(v => {
-                assert.equal(v, 1);
+                assert.equal(v.id, 1);
                 setTimeout(() => done(), 10);
             });
         });
 
         it('should use inflight observable feature when multiple subscriptions on returned source', (done) => {
-            let counter = 0;
-            const source = Observable.create(e => e.next(++counter)).pipe(delay(10));
+            
+            const source = service.getValue(2, 10);
             const cC = cacheContent.get(source);
 
             cC.subscribe(v => {
-                assert.equal(v, 1);
+                assert.equal(v.id, 1);
             });
 
             cC.subscribe(v => {
-                assert.equal(v, 1);
+                assert.equal(v.id, 1);
                 setTimeout(() => done(), 10);
             });
         });
@@ -89,31 +89,30 @@ describe('Cache content', () => {
 
     describe('cache invalidation', () => {
         it('should invalidate the cache', (done) => {
-            cacheContent.get(of(2))
+            cacheContent.get(service.getValue(0))
                 .pipe(
                     tap(() => cacheContent.invalidate()),
-                    mergeMap(() => cacheContent.get(of(4)))
+                    mergeMap(() => cacheContent.get(service.getValue(1)))
                 )
                 .subscribe(v => {
-                    assert.notEqual(v, 2);
-                    assert.equal(v, 4);
+                    assert.notEqual(v.data.name, 'John');
+                    assert.equal(v.data.name, 'Jack');
                     done();
                 });
         });
 
         it('should use source twice when invalidation between', (done) => {
-            let counter = 0;
-            const source = Observable.create(e => e.next(++counter));
+            const source = service.getValue(0);
             const cC = cacheContent.get(source);
 
             cC.subscribe(v => {
-                assert.equal(v, 1);
+                assert.equal(v.id, 1);
                 cacheContent.invalidate();
             });
 
             cC.pipe(delay(20))
             .subscribe(v => {
-                assert.equal(v, 2);
+                assert.equal(v.id, 2);
                 done();
             })
         });
@@ -122,9 +121,9 @@ describe('Cache content', () => {
     describe('default cache', () => {
         it('use default value', (done) => {
             cacheContent = new CacheContent('foo');
-            cacheContent.get(of(2))
+            cacheContent.get<string|Operation>(service.getValue(0))
                 .subscribe(v => {
-                    assert.notEqual(v, 2);
+                    assert.notEqual(v, 'bar');
                     assert.equal(v, 'foo');
                     done();
                 });
