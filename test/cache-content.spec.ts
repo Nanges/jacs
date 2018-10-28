@@ -14,7 +14,6 @@ describe('Cache content', () => {
     describe('get() method', () => {
 
         it('should return expected data', (done) => {
-
             cacheContent.get(of(2))
                 .subscribe(v => {
                     assert.equal(v, 2);
@@ -119,4 +118,16 @@ describe('Cache content', () => {
             })
         });
     });
+
+    describe('default cache', () => {
+        it('use default value', (done) => {
+            cacheContent = new CacheContent('foo');
+            cacheContent.get(of(2))
+                .subscribe(v => {
+                    assert.notEqual(v, 2);
+                    assert.equal(v, 'foo');
+                    done();
+                });
+        });
+    })
 });
