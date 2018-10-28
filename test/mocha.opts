@@ -2,5 +2,4 @@
 --require source-map-support/register
 --recursive
 --watch-extensions ts
---watch
 test/**/*.ts
