@@ -1,6 +1,8 @@
 import { Observable, of, Subject } from "rxjs";
 import { tap, mergeMap } from 'rxjs/operators';
 
+export type Executable<T> = () => Observable<T> 
+
 export class CacheContent{
 
     private valid:boolean;
@@ -12,7 +14,7 @@ export class CacheContent{
         this.valid = (this.cache != null);
     }
 
-    public get<T>(source:Observable<T>):Observable<T>{
+    public get<T>(fallback: Executable<T>): Observable<T>{
         return of({}).pipe(
             mergeMap(() => {
                 if(this.valid){
@@ -21,7 +23,7 @@ export class CacheContent{
 
                 if(this.subject == null){
                     this.subject = new Subject();
-                    return source.pipe(tap(c => this.updateCache(c)));
+                    return fallback().pipe(tap(c => this.updateCache(c)));
                 }
 
                 return this.subject.asObservable();
