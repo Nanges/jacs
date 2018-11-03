@@ -7,7 +7,23 @@ export class BaseCacheManager extends CacheManager{
     private cacheContent = new CacheContent();
     private previousArgs:string;
     
-    execute(executable: Executable<any>, args: any[]): Observable<any> {
+    /**
+     *
+     */
+    constructor() {
+        super();
+        BaseCacheManager._created = true;
+    }
+
+    /**
+     * Test purpose only
+     */
+    private static _created = false;
+    static created(){
+        return BaseCacheManager._created;
+    }
+
+    execute<T>(executable: Executable<T>, args: any[]): Observable<T> {
         const key = JSON.stringify(args);
 
         if(this.previousArgs !== key){

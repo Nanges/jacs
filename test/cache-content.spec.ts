@@ -8,7 +8,7 @@ describe('Cache content', () => {
 
     let cacheContent:CacheContent;
     let service:MockService;
-
+    
     beforeEach(() => {
         cacheContent = new CacheContent();
         service = new MockService();
