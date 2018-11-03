@@ -1,12 +1,9 @@
+import { Observable } from "rxjs";
 import { CacheManager } from "./cache-manager";
 import { BaseCacheManager } from "./managers/base-cm";
 import { Executable } from "./cache-content";
 import { ConfigurableCacheManager } from "./configurable-cache-manager";
-import { Observable } from "rxjs";
 import { CacheConfiguration, DefaultCacheManager } from "./managers/default-cm";
-
-
-
 
 export function cacheable();
 export function cacheable(config:CacheConfiguration);
@@ -24,8 +21,8 @@ export function cacheable<T>(ctor?:any, config?:T){
             cacheManager = new BaseCacheManager();
         }
         else if (decoratorArgs.length == 1 && !(decoratorArgs[0] instanceof CacheManager)){
-            let cacheManager = new DefaultCacheManager();
-            cacheManager.setup(decoratorArgs[0] as CacheConfiguration);
+            cacheManager = new DefaultCacheManager();
+            (cacheManager as ConfigurableCacheManager<CacheConfiguration>).setup(decoratorArgs[0] as CacheConfiguration);
         }
         else {
             cacheManager = new ctor();
@@ -34,6 +31,8 @@ export function cacheable<T>(ctor?:any, config?:T){
                 (cacheManager as ConfigurableCacheManager<T>).setup(config);
             }
         }
+
+        console.log(cacheManager);
         
         descriptor.value = function(...args:any[]){
             const executable = original.bind(this, ...args) as Executable<any>;
