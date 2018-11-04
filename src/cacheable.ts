@@ -3,20 +3,18 @@ import { CacheManager } from "./cache-manager";
 import { Executable } from "./cache-content";
 import { ConfigurableCacheManager } from "./configurable-cache-manager";
 import { CacheConfiguration } from "./managers/default-cm";
-import { DEFAULT_CACHEABLE_SETTINGS } from "./cacheable-settings";
-
-const settings = DEFAULT_CACHEABLE_SETTINGS.settings;
+import { BASE_CACHE_MANAGER, DEFAULT_CACHE_MANAGER, DEFAULT_CONFIGURATION } from "./cacheable-settings";
 
 export function resolveManager<T>(...args:any[]): CacheManager{
 
     let cacheManager: CacheManager;
     
     if(args.length == 0){
-        cacheManager = new settings.BASE_CACHE_MANAGER()
+        cacheManager = new BASE_CACHE_MANAGER();
     }
     else if (args.length == 1 && !(args[0] instanceof CacheManager)){
-        cacheManager = new settings.DEFAULT_CACHE_MANAGER();
-        (cacheManager as ConfigurableCacheManager<T>).setup(args[0] as T);
+        cacheManager = new DEFAULT_CACHE_MANAGER();
+        (cacheManager as ConfigurableCacheManager<DEFAULT_CONFIGURATION>).setup(args[0] as T);
     }
     else {
 
@@ -36,16 +34,13 @@ export function resolveManager<T>(...args:any[]): CacheManager{
 
 
 export function cacheable();
-export function cacheable(config:CacheConfiguration);
+export function cacheable(config:DEFAULT_CONFIGURATION);
 export function cacheable(ctor:{new():CacheManager});
 export function cacheable<T>(ctor:{new():ConfigurableCacheManager<T>}, config:T);
 export function cacheable<T>(ctor?:any, config?:T){
-
-    const decoratorArgs = arguments;
-
     return (target, propertyKey: string, descriptor: PropertyDescriptor) => {
         const original = descriptor.value as (...args:any[]) =>Observable<any>;
-        let cacheManager = resolveManager(decoratorArgs);
+        let cacheManager = resolveManager<T>(ctor, config);
 
         descriptor.value = function(...args:any[]){
             const executable = original.bind(this, ...args) as Executable<any>;
