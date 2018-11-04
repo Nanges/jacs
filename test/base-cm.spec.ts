@@ -38,7 +38,7 @@ describe('Base Cache Manager', () => {
         });
     })
 
-    it('should clear the cache if parameters change', (done) => {
+    it('should clear the cache if parameters changes', (done) => {
 
         const call1 = service.getValue.bind(service,0) as Executable<Operation>;
         const call2 = service.getValue.bind(service,1) as Executable<Operation>;

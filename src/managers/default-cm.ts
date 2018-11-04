@@ -8,23 +8,6 @@ export interface CacheConfiguration{
 
 export class DefaultCacheManager extends ConfigurableCacheManager<CacheConfiguration>{
 
-
-    /**
-     *
-     */
-    constructor() {
-        super();
-        DefaultCacheManager._created = true;
-    }
-
-    /**
-     * Test purpose only
-     */
-    private static _created = false;
-    static created(){
-        return DefaultCacheManager._created;
-    }
-
     setup(config: CacheConfiguration) {
         
     }    
