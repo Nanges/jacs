@@ -1,6 +1,6 @@
-import { Executable } from "./cache-content";
 import { Subject, Observable } from "rxjs";
 import { tap } from "rxjs/operators";
+import { Executable } from "./executable";
 
 export class Dispatcher{
 

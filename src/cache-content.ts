@@ -1,8 +1,7 @@
 import { Observable, of, Subject } from "rxjs";
 import { tap, mergeMap } from 'rxjs/operators';
 import { Dispatcher } from "./dispatcher";
-
-export type Executable<T> = () => Observable<T> 
+import { Executable } from "./executable";
 
 export class CacheContent{
 

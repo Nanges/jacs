@@ -1,8 +1,8 @@
 import { Observable } from "rxjs";
 import { CacheManager } from "./cache-manager";
-import { Executable } from "./cache-content";
 import { ConfigurableCacheManager } from "./configurable-cache-manager";
 import { BASE_CACHE_MANAGER, DEFAULT_CACHE_MANAGER, DEFAULT_CONFIGURATION } from "./cacheable-settings";
+import { Executable } from "./executable";
 
 export function resolveManager<T>(...args:any[]): CacheManager{
 
