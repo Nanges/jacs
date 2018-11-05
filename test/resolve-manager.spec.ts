@@ -3,16 +3,14 @@ import { BASE_CACHE_MANAGER, DEFAULT_CACHE_MANAGER } from "../src/cacheable-sett
 import { assert } from "chai";
 import { CacheManager } from "../src/cache-manager";
 import { Observable } from "rxjs";
-import { Executable } from "../src/cache-content";
 import { ConfigurableCacheManager } from "../src/configurable-cache-manager";
+import { Executable } from "src/executable";
 
 class MyManager extends CacheManager{
     execute<T>(executable: Executable<T>, args: any[]): Observable<T> {
         return null;
     }
 }
-
-
 
 class MyConfigrableManager extends ConfigurableCacheManager<any>{
     setup(config: any) {
