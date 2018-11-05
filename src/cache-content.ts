@@ -1,17 +1,15 @@
 import { Observable, of, Subject } from "rxjs";
 import { tap, mergeMap } from 'rxjs/operators';
-import { Dispatcher } from "./dispatcher";
 import { Executable } from "./executable";
 
 export class CacheContent{
 
     private valid:boolean;
-    private dispatcher: Dispatcher;
+    private subject:Subject<any>;
 
     constructor(
         private cache:any = null,
     ) {
-        this.dispatcher = new Dispatcher();
         this.valid = (this.cache != null);
     }
 
@@ -22,7 +20,15 @@ export class CacheContent{
                     return of(this.cache);
                 }
 
-                return this.dispatcher.dispatch(() => fallback().pipe(tap(c => this.updateCache(c))));
+                if(this.subject == null){
+                    this.subject = new Subject<any>();
+                    return fallback().pipe(
+                        tap(c => this.updateCache(c)),
+                        tap(c => this.notifyInflightObservers(c))
+                    );
+                }
+
+                return this.subject.asObservable();
             })
         );
     }
@@ -34,5 +40,13 @@ export class CacheContent{
     private updateCache(content:any){
         this.cache = content;
         this.valid = true;
+    }
+
+    private notifyInflightObservers(content:any){
+        if(this.subject.observers.length > 0){
+            this.subject.next(content);
+            this.subject.complete();
+        }
+        this.subject = null;
     }
 }

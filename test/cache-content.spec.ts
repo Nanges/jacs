@@ -1,8 +1,9 @@
 import { assert, expect } from "chai";
-import { CacheContent, Executable } from "../src/cache-content";
+import { CacheContent } from "../src/cache-content";
 import { of, Observable } from "rxjs";
 import { delay, mergeMap, tap, ignoreElements } from "rxjs/operators";
 import { MockService, Operation } from "./mock-service";
+import { Executable } from "src/executable";
 
 describe('Cache content', () => {
 
