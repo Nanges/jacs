@@ -2,7 +2,6 @@ import { Observable } from "rxjs";
 import { CacheManager } from "./cache-manager";
 import { Executable } from "./cache-content";
 import { ConfigurableCacheManager } from "./configurable-cache-manager";
-import { CacheConfiguration } from "./managers/default-cm";
 import { BASE_CACHE_MANAGER, DEFAULT_CACHE_MANAGER, DEFAULT_CONFIGURATION } from "./cacheable-settings";
 
 export function resolveManager<T>(...args:any[]): CacheManager{
@@ -12,13 +11,12 @@ export function resolveManager<T>(...args:any[]): CacheManager{
     if(args.length == 0){
         cacheManager = new BASE_CACHE_MANAGER();
     }
-    else if (args.length == 1 && !(args[0] instanceof CacheManager)){
+    else if (args.length == 1 && !(args[0].prototype instanceof CacheManager)){
         cacheManager = new DEFAULT_CACHE_MANAGER();
         (cacheManager as ConfigurableCacheManager<DEFAULT_CONFIGURATION>).setup(args[0] as T);
     }
     else {
-
-        const ctor = args[0] as {new():ConfigurableCacheManager<T>};
+        const ctor = args[0] as {new():CacheManager};
         const config = args[1] as T;
 
         cacheManager = new ctor();
