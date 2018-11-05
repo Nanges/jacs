@@ -1,7 +1,6 @@
-import { assert, expect } from "chai";
+import { assert } from "chai";
 import { CacheContent } from "../src/cache-content";
-import { of, Observable } from "rxjs";
-import { delay, mergeMap, tap, ignoreElements } from "rxjs/operators";
+import { delay, mergeMap, tap } from "rxjs/operators";
 import { MockService, Operation } from "./mock-service";
 import { Executable } from "src/executable";
 

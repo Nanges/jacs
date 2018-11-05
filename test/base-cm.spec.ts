@@ -1,8 +1,8 @@
 import { BaseCacheManager } from "../src/managers/base-cm";
 import { MockService, Operation } from "./mock-service";
 import { assert } from "chai";
-import { Executable } from "src/cache-content";
 import { switchMap } from "rxjs/operators";
+import { Executable } from "../src/executable";
 
 describe('Base Cache Manager', () => {
     let cm: BaseCacheManager;
@@ -15,9 +15,9 @@ describe('Base Cache Manager', () => {
 
     it('should return expected data', (done) => {
 
-        const call1 = service.getValue.bind(service,0) as Executable<Operation>;
+        const call1 = service.getValue.bind(service,0);
 
-        cm.execute(call1, [0])
+        cm.execute<Operation>(call1, [0])
             .subscribe(v => {
                 assert.equal(v.data.name, 'John');
                 done();
@@ -26,11 +26,11 @@ describe('Base Cache Manager', () => {
 
     it('should cache the value if args never changes', (done) => {
 
-        const call1 = service.getValue.bind(service,0) as Executable<Operation>;
-        const call2 = service.getValue.bind(service,1) as Executable<Operation>;
+        const call1 = service.getValue.bind(service,0);
+        const call2 = service.getValue.bind(service,1);
 
-        cm.execute(call1, [0]).pipe(
-            switchMap(() => cm.execute(call2, [0]))
+        cm.execute<Operation>(call1, [0]).pipe(
+            switchMap(() => cm.execute<Operation>(call2, [0]))
         ).subscribe(v => {
             assert.equal(v.id, 1);
             assert.equal(v.data.name, 'John');
@@ -40,11 +40,11 @@ describe('Base Cache Manager', () => {
 
     it('should clear the cache if parameters changes', (done) => {
 
-        const call1 = service.getValue.bind(service,0) as Executable<Operation>;
-        const call2 = service.getValue.bind(service,1) as Executable<Operation>;
+        const call1 = service.getValue.bind(service,0);
+        const call2 = service.getValue.bind(service,1);
 
-        cm.execute(call1, [0]).pipe(
-            switchMap(() => cm.execute(call2, [1]))
+        cm.execute<Operation>(call1, [0]).pipe(
+            switchMap(() => cm.execute<Operation>(call2, [1]))
         ).subscribe(v => {
             assert.equal(v.id, 2);
             assert.equal(v.data.name, 'Jack');
