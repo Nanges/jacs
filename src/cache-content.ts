@@ -14,6 +14,9 @@ export class CacheContent<T>{
         this.valid = (this._value != null);
     }
 
+    /**
+     * Prevent mutation with a clone of the value
+     */
     get value():T{
         return cloneDeep(this._value) as T;
     }
