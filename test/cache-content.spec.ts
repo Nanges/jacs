@@ -6,11 +6,11 @@ import { Executable } from "src/executable";
 
 describe('Cache content', () => {
 
-    let cacheContent:CacheContent;
+    let cacheContent:CacheContent<Operation>;
     let service:MockService;
     
     beforeEach(() => {
-        cacheContent = new CacheContent();
+        cacheContent = new CacheContent<Operation>();
         service = new MockService();
     });
 
@@ -42,13 +42,6 @@ describe('Cache content', () => {
                     done();
                 });
         });
-
-        it('should return observable not equal to source', () => {
-            const src$ = service.getValue.bind(service, 0);
-            const cC$ = cacheContent.get(src$);
-
-            assert.notEqual(src$, cC$);
-        })
 
         it('should return observable using source once', (done) => {
             const source = service.getValue.bind(service, 0) as Executable<Operation>;
@@ -131,11 +124,31 @@ describe('Cache content', () => {
 
     describe('default cache', () => {
         it('use default value', (done) => {
-            cacheContent = new CacheContent('foo');
+            let cacheContent = new CacheContent<string|Operation>('foo');
             cacheContent.get(service.getValue.bind(service, 0) as Executable<string|Operation>)
                 .subscribe(v => {
                     assert.notEqual(v, 'bar');
                     assert.equal(v, 'foo');
+                    done();
+                });
+        });
+    });
+
+    describe('value accessor', () => {
+        it('use value accessor', (done) => {
+            let cacheContent = new CacheContent<Operation>();
+            cacheContent.get(service.getValue.bind(service, 0) as Executable<Operation>)
+                .subscribe(v => {
+                    assert.deepEqual(v , cacheContent.value);
+                    done();
+                });
+        });
+
+        it('should value accessor be a clone of original cached value', (done) => {
+            let cacheContent = new CacheContent<Operation>();
+            cacheContent.get(service.getValue.bind(service, 0) as Executable<Operation>)
+                .subscribe(v => {
+                    assert.notEqual(v , cacheContent.value);
                     done();
                 });
         });

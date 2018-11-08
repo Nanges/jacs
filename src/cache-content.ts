@@ -1,27 +1,32 @@
 import { Observable, of, Subject } from "rxjs";
 import { tap, mergeMap } from 'rxjs/operators';
 import { Executable } from "./executable";
+import { cloneDeep } from 'lodash';
 
-export class CacheContent{
+export class CacheContent<T>{
 
     private valid:boolean;
     private subject:Subject<any>;
 
     constructor(
-        private cache:any = null,
+        private _value:T = null,
     ) {
-        this.valid = (this.cache != null);
+        this.valid = (this._value != null);
     }
 
-    public get<T>(fallback: Executable<T>): Observable<T>{
+    get value():T{
+        return cloneDeep(this._value) as T;
+    }
+
+    public get(fallback: Executable<T>): Observable<T>{
         return of({}).pipe(
             mergeMap(() => {
                 if(this.valid){
-                    return of(this.cache);
+                    return of(this._value);
                 }
 
                 if(this.subject == null){
-                    this.subject = new Subject<any>();
+                    this.subject = new Subject<T>();
                     return fallback().pipe(
                         tap(c => this.updateCache(c)),
                         tap(c => this.notifyInflightObservers(c))
@@ -37,12 +42,12 @@ export class CacheContent{
         this.valid = false;
     }
 
-    private updateCache(content:any){
-        this.cache = content;
+    private updateCache(content:T){
+        this._value = content;
         this.valid = true;
     }
 
-    private notifyInflightObservers(content:any){
+    private notifyInflightObservers(content:T){
         if(this.subject.observers.length > 0){
             this.subject.next(content);
             this.subject.complete();
