@@ -1,5 +1,5 @@
 import { Observable, of, Subject } from "rxjs";
-import { tap, mergeMap } from 'rxjs/operators';
+import { tap, switchMap } from 'rxjs/operators';
 import { Executable } from "./executable";
 import { cloneDeep } from 'lodash';
 
@@ -15,15 +15,19 @@ export class CacheContent<T>{
     }
 
     /**
-     * Prevent mutation with a clone of the value
+     * Prevent value mutation by cloning it
      */
     get value():T{
         return cloneDeep(this._value) as T;
     }
 
+    /**
+     * Return an observable of the cached value or the given fallback if cache is invalid
+     * @param fallback : The fallback used to refresh the value when the cache is not valid anymore
+     */
     public get(fallback: Executable<T>): Observable<T>{
         return of({}).pipe(
-            mergeMap(() => {
+            switchMap(() => {
                 if(this.valid){
                     return of(this._value);
                 }
@@ -41,6 +45,9 @@ export class CacheContent<T>{
         );
     }
 
+    /**
+     * Invalidate the cache.
+     */
     public invalidate():void{
         this.valid = false;
     }

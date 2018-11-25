@@ -1,6 +1,7 @@
 import { CacheManager} from "../cache-manager";
 import { Observable } from "rxjs";
-import { CacheContent, Executable } from "../cache-content";
+import { CacheContent } from "../cache-content";
+import { Executable } from "../executable";
 
 export class BaseCacheManager extends CacheManager{
 
@@ -15,6 +16,6 @@ export class BaseCacheManager extends CacheManager{
             this.previousArgs = key;
         }
 
-        return this.cacheContent.get(executable);
+        return this.cacheContent.get(executable) as Observable<T>;
     }
 }
