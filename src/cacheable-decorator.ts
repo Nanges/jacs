@@ -2,7 +2,7 @@ import { Observable } from "rxjs";
 import { Executable } from "./executable";
 import { CacheManagerResolver } from "./cache-manager-resolver";
 
-export function cacheable(config?: any) {
+export function cacheableDecorator(config?: any): MethodDecorator {
   return (target, propertyKey: string, descriptor: PropertyDescriptor) => {
     /**
      * One cacheable manager per target instance
