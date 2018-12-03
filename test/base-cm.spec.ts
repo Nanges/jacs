@@ -1,7 +1,7 @@
 import { assert } from "chai";
-import { switchMap, concat, tap } from "rxjs/operators";
+import { switchMap, tap } from "rxjs/operators";
 import { BaseCacheManager } from "../src/managers/base-cm";
-import { MockService, Operation } from "./mock-service";
+import { MockService } from "./mock-service";
 import { CacheManagerResolver } from "../src/cache-manager-resolver";
 import { cacheableDecorator } from "../src/cacheable-decorator";
 
