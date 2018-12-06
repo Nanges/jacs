@@ -3,7 +3,7 @@ import { switchMap, concat, tap } from "rxjs/operators";
 import { BaseCacheManager } from "../src/managers/base-cm";
 import { MockService, Operation } from "./mock-service";
 import { CacheManagerResolver } from "../src/cache-manager-resolver";
-import { cacheable } from "../src/cacheable";
+import { cacheDecorator as cacheable } from "../src/cache-decorator";
 
 /**
  * declare factory before setup the service
