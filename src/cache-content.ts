@@ -1,5 +1,5 @@
 import { Observable, of, Subject } from "rxjs";
-import { tap, switchMap } from 'rxjs/operators';
+import { tap, switchMap, finalize } from 'rxjs/operators';
 import { Executable } from "./executable";
 import { cloneDeep } from 'lodash';
 
@@ -36,7 +36,8 @@ export class CacheContent<T>{
                     this.subject = new Subject<T>();
                     return fallback().pipe(
                         tap(c => this.updateCache(c)),
-                        tap(c => this.notifyInflightObservers(c))
+                        tap(c => this.notifyInflightObservers(c), e => this.subject.error(e)),
+                        finalize(() => this.disposeSubject())
                     );
                 }
 
@@ -60,8 +61,11 @@ export class CacheContent<T>{
     private notifyInflightObservers(content:T){
         if(this.subject.observers.length > 0){
             this.subject.next(content);
-            this.subject.complete();
         }
-        this.subject = null;
+    }
+
+    private disposeSubject(){
+      this.subject.complete();
+      this.subject = null;
     }
 }
