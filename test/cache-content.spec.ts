@@ -1,8 +1,9 @@
 import { assert } from "chai";
 import { CacheContent } from "../src/cache-content";
-import { delay, mergeMap, tap, switchMap, finalize, concatMap } from "rxjs/operators";
+import { delay, mergeMap, tap, switchMap, finalize, concatMap, takeUntil } from "rxjs/operators";
 import { MockService, Operation } from "./mock-service";
 import { Executable } from "src/executable";
+import { interval, timer, of, Subject, BehaviorSubject } from "rxjs";
 
 describe('Cache content', () => {
 
@@ -14,7 +15,7 @@ describe('Cache content', () => {
         service = new MockService();
     });
 
-    describe('get() method', () => {
+    xdescribe('get() method', () => {
 
         it('should return expected data', (done) => {
 
@@ -57,7 +58,9 @@ describe('Cache content', () => {
                 done();
             })
         })
+    });
 
+    describe('inflight observable', () => {
         it('should use inflight observable feature', (done) => {
             const source = service.getValue.bind(service, 1, 10) as Executable<Operation>;
 
@@ -68,6 +71,45 @@ describe('Cache content', () => {
             cacheContent.get(source).subscribe(v => {
                 assert.equal(v.id, 1);
                 setTimeout(() => done(), 10);
+            });
+        });
+
+        it('should work with unsubscription', (done) => {
+            // source with a delay of 10ms
+            const source = service.getValue.bind(service, 1, 10) as Executable<Operation>;
+
+            const sub = cacheContent.get(source).subscribe();
+            sub.unsubscribe();
+            cacheContent.get(source).subscribe(v => {
+                assert.equal(v.id, 1);
+                done();
+            });
+        });
+
+        it('test', (done) => {
+            // source with a delay of 10ms
+            const src$ = of('5');
+            const emitter = new BehaviorSubject(null);
+
+            src$.subscribe(emitter);
+            emitter.subscribe(v => console.log(v));
+            
+
+            done();
+        });
+
+        xit('should work with switchMap', (done) => {
+            // source with a delay of 10ms
+            const source = service.getValue.bind(service, 1, 10) as Executable<Operation>;
+
+            // emit every 5ms until 11ms
+            const src$ = interval(5)
+            .pipe(
+                switchMap(() => cacheContent.get(source)),
+                takeUntil(timer(15))
+            ).subscribe(v =>{
+                assert.equal(v.id, 1); 
+                done();
             });
         });
 
@@ -87,7 +129,7 @@ describe('Cache content', () => {
         });
     });
 
-    describe('cache invalidation', () => {
+    xdescribe('cache invalidation', () => {
         it('should invalidate the cache', (done) => {
 
             const call1 = service.getValue.bind(service, 0) as Executable<Operation>;
@@ -122,7 +164,7 @@ describe('Cache content', () => {
         });
     });
 
-    describe('default cache', () => {
+    xdescribe('default cache', () => {
         it('use default value', (done) => {
             let cacheContent = new CacheContent<string|Operation>('foo');
             cacheContent.get(service.getValue.bind(service, 0) as Executable<string|Operation>)
@@ -134,7 +176,7 @@ describe('Cache content', () => {
         });
     });
 
-    describe('value accessor', () => {
+    xdescribe('value accessor', () => {
         it('use value accessor', (done) => {
             let cacheContent = new CacheContent<Operation>();
             cacheContent.get(service.getValue.bind(service, 0) as Executable<Operation>)

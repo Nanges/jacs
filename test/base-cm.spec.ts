@@ -18,7 +18,7 @@ class BcmMockService extends MockService {
   }
 }
 
-describe("Base Cache Manager", () => {
+xdescribe("Base Cache Manager", () => {
   let service: BcmMockService;
 
   beforeEach(() => {
