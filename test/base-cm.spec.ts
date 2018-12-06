@@ -3,13 +3,13 @@ import { switchMap, tap } from "rxjs/operators";
 import { BaseCacheManager } from "../src/managers/base-cm";
 import { MockService } from "./mock-service";
 import { CacheManagerResolver } from "../src/cache-manager-resolver";
-import { cacheableDecorator } from "../src/cacheable-decorator";
+import { cacheDecorator } from "../src/cache-decorator";
 
 /**
  * declare factory before setup the service
  */
 CacheManagerResolver.factory = () => new BaseCacheManager();
-const cacheable: () => MethodDecorator = cacheableDecorator;
+const cacheable: () => MethodDecorator = cacheDecorator;
 
 class BcmMockService extends MockService {
   @cacheable()
