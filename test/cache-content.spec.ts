@@ -1,6 +1,6 @@
 import { assert } from "chai";
 import { CacheContent } from "../src/cache-content";
-import { delay, mergeMap, tap } from "rxjs/operators";
+import { delay, mergeMap, tap, switchMap, finalize, concatMap } from "rxjs/operators";
 import { MockService, Operation } from "./mock-service";
 import { Executable } from "src/executable";
 
@@ -93,16 +93,16 @@ describe('Cache content', () => {
             const call1 = service.getValue.bind(service, 0) as Executable<Operation>;
             const call2 = service.getValue.bind(service, 1) as Executable<Operation>;
 
-            cacheContent.get(call1)
-                .pipe(
-                    tap(() => cacheContent.invalidate()),
-                    mergeMap(() => cacheContent.get(call2))
-                )
-                .subscribe(v => {
-                    assert.notEqual(v.data.name, 'John');
-                    assert.equal(v.data.name, 'Jack');
-                    done();
-                });
+            cacheContent.get(call1).pipe(
+                concatMap(() => {
+                    cacheContent.invalidate();
+                    return cacheContent.get(call2);
+                })
+            ).subscribe(v => {
+                assert.notEqual(v.data.name, 'John');
+                assert.equal(v.data.name, 'Jack');
+                done();
+            });
         });
 
         it('should use source twice when invalidation between', (done) => {
