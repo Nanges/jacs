@@ -6,6 +6,7 @@ import { cloneDeep } from 'lodash';
 export class CacheContent<T> {
     private _valid: boolean;
     private _pending: boolean;
+    private switched: boolean;
     private subject: Subject<any>;
     private onCancel: Subject<void>;
     private src$: Observable<T>;
@@ -51,7 +52,7 @@ export class CacheContent<T> {
         );
 
         // first subscription will set the pending state to true
-        if (!this.pending) {
+        if (!this.pending || this.switched) {
             this._pending = true;
             return Observable.create((o: Observer<T>) => {
                 this.src$.subscribe(o);
@@ -122,8 +123,11 @@ export class CacheContent<T> {
     private handleUnSubscription() {
         console.log('handle cancellation');
         if (!this.valid && this.subject) {
-            console.log(this.onCancel.observers.length);
-            this.onCancel.next(void 0);
+            if (this.onCancel.observers.length) {
+                this.onCancel.next(void 0);
+            } else {
+                this.switched = true;
+            }
         } else {
             this._pending = false;
         }
