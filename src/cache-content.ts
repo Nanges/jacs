@@ -54,6 +54,7 @@ export class CacheContent<T> {
         // first subscription will set the pending state to true
         if (!this.pending || this.switched) {
             this._pending = true;
+            this.switched = false;
             return Observable.create((o: Observer<T>) => {
                 this.src$.subscribe(o);
                 return () => this.handleUnSubscription();
