@@ -82,9 +82,15 @@ describe('Cache content', () => {
 
         it('call, cancel, call', done => {
             const call = service.getValue.bind(service, 1, 10) as Executable<Operation>;
-            const sub = cacheContent.get(call).subscribe();
+            const sub = cacheContent.get(call).subscribe(v => {
+                assert.equal(v.id, 1);
+                assert.isFalse(cacheContent.valid);
+            });
             sub.unsubscribe();
-            cacheContent.get(call).subscribe(v => done());
+            cacheContent.get(call).subscribe(v => {
+                assert.equal(v.id, 2);
+                done();
+            });
         });
 
         it('call, call, switchMap', done => {
@@ -98,7 +104,9 @@ describe('Cache content', () => {
             });
 
             emitter.next(0);
-            setTimeout(() => cacheContent.get(call).subscribe(), 5);
+            setTimeout(() => cacheContent.get(call).subscribe(v => {
+                assert.equal(v.id, 1);
+            }), 5);
             setTimeout(() => emitter.next(0), 50);
         });
 
@@ -106,7 +114,10 @@ describe('Cache content', () => {
             const call = service.getValue.bind(service, 1, 10) as Executable<Operation>;
 
             const sub = cacheContent.get(call).subscribe();
-            const sub2 = cacheContent.get(call).subscribe(() => done());
+            const sub2 = cacheContent.get(call).subscribe(v => {
+                assert.equal(v.id, 1);
+                done();
+            });
             sub.unsubscribe();
         });
 
