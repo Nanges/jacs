@@ -3,7 +3,7 @@ import { CacheContent } from '../src/cache-content';
 import { delay, switchMap, concatMap } from 'rxjs/operators';
 import { MockService, Operation } from './mock-service';
 import { Executable } from 'src/executable';
-import { Subject } from 'rxjs';
+import { Subject, Subscription } from 'rxjs';
 
 describe('Cache content', () => {
     let cacheContent: CacheContent<Operation>;
@@ -39,37 +39,7 @@ describe('Cache content', () => {
         });
     });
 
-    describe('call id and subscription features', () => {
-        it('call, cancel, call', done => {
-            const call = service.getValue.bind(service, 1, 10) as Executable<Operation>;
-            const sub = cacheContent.get(call).subscribe();
-            sub.unsubscribe();
-            cacheContent.get(call).subscribe(v => done());
-        });
-
-        it('call, call, cancel', done => {
-            const call = service.getValue.bind(service, 1, 10) as Executable<Operation>;
-
-            const sub = cacheContent.get(call).subscribe();
-            const sub2 = cacheContent.get(call).subscribe(() => done());
-            sub.unsubscribe();
-        });
-    });
-
-    describe('inflight observable', () => {
-        it('should use inflight observable feature', done => {
-            const source = service.getValue.bind(service, 1, 10) as Executable<Operation>;
-
-            cacheContent.get(source).subscribe(v => {
-                assert.equal(v.id, 1);
-            });
-
-            cacheContent.get(source).subscribe(v => {
-                assert.equal(v.id, 1);
-                setTimeout(() => done(), 5);
-            });
-        });
-
+    describe('inflight observable and subscription features', () => {
         it('should work with switchMap', done => {
             // source with a delay of 10ms
             const source = service.getValue.bind(service, 1, 10) as Executable<Operation>;
@@ -85,6 +55,80 @@ describe('Cache content', () => {
             setTimeout(() => {
                 emitter.next(0);
             }, 5);
+        });
+
+        it('should use inflight observable feature', done => {
+            const source = service.getValue.bind(service, 1, 10) as Executable<Operation>;
+
+            cacheContent.get(source).subscribe(v => {
+                assert.equal(v.id, 1);
+            });
+
+            cacheContent.get(source).subscribe(v => {
+                assert.equal(v.id, 1);
+                setTimeout(() => done(), 5);
+            });
+        });
+
+        it('call, cancel, call', done => {
+            const call = service.getValue.bind(service, 1, 10) as Executable<Operation>;
+            const sub = cacheContent.get(call).subscribe();
+            sub.unsubscribe();
+            cacheContent.get(call).subscribe(v => done());
+        });
+
+        it('call, call, switchMap', done => {
+            const call = service.getValue.bind(service, 1, 100) as Executable<Operation>;
+
+            const emitter = new Subject();
+
+            emitter.pipe(switchMap(() => cacheContent.get(call))).subscribe(v => {
+                assert.equal(v.id, 2);
+                done();
+            });
+
+            emitter.next(0);
+            setTimeout(() => cacheContent.get(call).subscribe(), 5);
+            setTimeout(() => emitter.next(0), 50);
+        });
+
+        it('call, call, cancel', done => {
+            const call = service.getValue.bind(service, 1, 10) as Executable<Operation>;
+
+            const sub = cacheContent.get(call).subscribe();
+            const sub2 = cacheContent.get(call).subscribe(() => done());
+            sub.unsubscribe();
+        });
+
+        it('call, call, switchmap, cancel', done => {
+            const call = service.getValue.bind(service, 1, 100) as Executable<Operation>;
+            const emitter = new Subject();
+            let subscription: Subscription;
+
+            emitter.pipe(switchMap(() => cacheContent.get(call))).subscribe();
+
+            // 1st call
+            emitter.next(0);
+            assert.equal(service.counter, 1);
+
+            // 2nd call (inflight)
+            setTimeout(() => {
+                subscription = cacheContent.get(call).subscribe()
+                assert.equal(service.counter, 1);
+            }, 25);
+
+            // switch
+            setTimeout(() => {
+                emitter.next(0);
+                assert.equal(service.counter, 2);
+            }, 50);
+
+            // cancel
+            setTimeout(() => {
+                subscription.unsubscribe();
+                assert.equal(service.counter, 2);
+                done();
+            }, 75);
         });
     });
 

@@ -6,10 +6,8 @@ import { cloneDeep } from 'lodash';
 export class CacheContent<T> {
     private _valid: boolean;
     private _pending: boolean;
-    private switched: boolean;
-    private subject: Subject<any>;
-    private onCancel: Subject<void>;
-    private src$: Observable<T>;
+    private onValue$: Subject<any>;
+    private onCancel$: Subject<void>;
 
     constructor(private _value: T = null) {
         this._valid = this._value != null;
@@ -45,53 +43,34 @@ export class CacheContent<T> {
             return of(this._value);
         }
 
-        //
-        this.src$ = fallback().pipe(
-            tap(c => this.updateCache(c)),
-            tap(c => this.notifyInflightObservers(c))
-        );
+        return this.buildObservable(fallback);
+    }
 
-        // first subscription will set the pending state to true
-        if (!this.pending || this.switched) {
-            this._pending = true;
-            this.switched = false;
-            return Observable.create((o: Observer<T>) => {
-                this.src$.subscribe(o);
-                return () => this.handleUnSubscription();
-            });
-        }
-
-        console.log('inflight mode');
-        // inflight observable
-        if (!this.subject) {
-            this.subject = new Subject<T>();
-        }
-
-        if (!this.onCancel) {
-            this.onCancel = new Subject<void>();
-        }
-
+    /**
+     *
+     * @param fallback
+     */
+    private buildObservable(fallback: Executable<T>): Observable<T> {
         return Observable.create((o: Observer<T>) => {
-            console.log('inflight subscription');
-            const cancelSrc$ = this.onCancel.pipe(
-                tap(() => console.log('cancelled')),
-                switchMap(() => this.src$)
+            const src$ = fallback().pipe(
+                tap(c => this.updateCache(c)),
+                tap(c => this.notifyInflightObservers(c))
             );
-            race(cancelSrc$, this.subject).subscribe(o);
+
+            // first call
+            if (!this.pending) {
+                this._pending = true;
+                src$.subscribe(o);
+                return () => this.handleUnSubscription();
+            }
+
+            // inflight observable
+            const value$ = this.onValue$ || (this.onValue$ = new Subject<T>());
+            const cancel = this.onCancel$ || (this.onCancel$ = new Subject<void>());
+            const cancel$ = cancel.pipe(switchMap(() => src$));
+
+            race(value$, cancel$).subscribe(o);
         });
-
-        // return Observable.create((o: Observer<T>) => {
-        //     if (!this.onCancel) {
-        //         this.onCancel = new Subject<void>();
-        //     }
-
-        //     const transit$ = this.onCancel.pipe(
-        //         tap(() => console.log('cancel')),
-        //         switchMap(() => this.src$)
-        //     );
-        //     const t$ = race(transit$, this.subject);
-        //     t$.subscribe(o);
-        // });
     }
 
     /**
@@ -108,43 +87,31 @@ export class CacheContent<T> {
     }
 
     private notifyInflightObservers(content: T) {
-        if (this.subject && this.subject.observers.length > 0) {
-            this.subject.next(content);
+        if (this.onValue$ && this.onValue$.observers.length > 0) {
+            this.onValue$.next(content);
         }
 
         // dispose the subject as soon as possible
-        this.disposeSubject();
+        this.dispose();
     }
-
-    // private handleError(e: any) {
-    //     this.subject.error(e);
-    //     this.disposeSubject();
-    // }
 
     private handleUnSubscription() {
-        console.log('handle cancellation');
-        if (!this.valid && this.subject) {
-            if (this.onCancel.observers.length) {
-                this.onCancel.next(void 0);
-            } else {
-                this.switched = true;
-            }
-        } else {
+        // there is no inflight observers
+        if (!this.onValue$) {
             this._pending = false;
+            return;
         }
 
-        /*if (this.onCancel) {
-            console.log(this.subject.observers.length);
-            this.onCancel.next(void 0);
-        } else {
-            this.disposeSubject();
-        }*/
+        // there is inflight observers
+        this.onCancel$.next(void 0);
     }
 
-    private disposeSubject() {
-        if (this.subject) {
-            this.subject.complete();
-            this.subject = null;
+    private dispose() {
+        if (this.onValue$) {
+            this.onValue$.complete();
         }
+
+        this.onValue$ = null;
+        this.onCancel$ = null;
     }
 }
