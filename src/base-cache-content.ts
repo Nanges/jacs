@@ -3,7 +3,7 @@ import { tap, switchMap, finalize, takeUntil, share } from 'rxjs/operators';
 import { Executable } from './executable';
 import { cloneDeep } from 'lodash';
 
-export class CacheContent<T> {
+export class BaseCacheContent<T> {
     private _valid: boolean;
     private src$: Observable<T>;
 

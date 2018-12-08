@@ -1,7 +1,7 @@
 import { Observable } from "rxjs";
 import { Executable } from "src/executable";
 import { DefaultCacheConfig } from "./default-cache-config";
-import { CacheContent } from "../../cache-content";
+import { BaseCacheContent } from "../../base-cache-content";
 
 const defaultConfig: DefaultCacheConfig = {
   MAX_AGE: 300000 //5 min
@@ -18,7 +18,7 @@ export class DefaultCacheManager {
   }
 
   execute<T>(executable: Executable<T>, args: any[]): Observable<T> {
-    const cC = new CacheContent();
+    const cC = new BaseCacheContent();
     cC.get(undefined);
     return null;
   }

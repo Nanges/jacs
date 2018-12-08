@@ -1,13 +1,13 @@
 import { CacheManager} from "../cache-manager";
 import { Observable } from "rxjs";
-import { CacheContent } from "../cache-content";
+import { BaseCacheContent } from "../base-cache-content";
 import { Executable } from "../executable";
 
 export class BaseCacheManager extends CacheManager{
 
-    private cacheContent = new CacheContent();
+    private cacheContent = new BaseCacheContent();
     private previousArgs:string;
-    
+
     execute<T>(executable: Executable<T>, args: any[]): Observable<T> {
         const key = JSON.stringify(args);
 

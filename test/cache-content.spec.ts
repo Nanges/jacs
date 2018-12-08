@@ -1,16 +1,16 @@
 import { assert } from 'chai';
-import { CacheContent } from '../src/cache-content';
+import { BaseCacheContent } from '../src/base-cache-content';
 import { delay, switchMap, concatMap } from 'rxjs/operators';
 import { MockService, Operation } from './mock-service';
 import { Executable } from 'src/executable';
 import { Subject, Subscription } from 'rxjs';
 
 describe('Cache content', () => {
-    let cacheContent: CacheContent<Operation>;
+    let cacheContent: BaseCacheContent<Operation>;
     let service: MockService;
 
     beforeEach(() => {
-        cacheContent = new CacheContent<Operation>();
+        cacheContent = new BaseCacheContent<Operation>();
         service = new MockService();
     });
 
@@ -168,7 +168,7 @@ describe('Cache content', () => {
 
     describe('default cache', () => {
         it('use default value', done => {
-            let cacheContent = new CacheContent<string | Operation>('foo');
+            let cacheContent = new BaseCacheContent<string | Operation>('foo');
             assert.isTrue(cacheContent.valid);
             assert.equal(cacheContent.value, 'foo');
 
@@ -184,7 +184,7 @@ describe('Cache content', () => {
 
     describe('value accessor', () => {
         it('use value accessor', done => {
-            let cacheContent = new CacheContent<Operation>();
+            let cacheContent = new BaseCacheContent<Operation>();
             cacheContent.get(service.getValue.bind(service, 0) as Executable<Operation>).subscribe(v => {
                 assert.deepEqual(v, cacheContent.value);
                 done();
@@ -192,7 +192,7 @@ describe('Cache content', () => {
         });
 
         it('should value accessor be a clone of original cached value', done => {
-            let cacheContent = new CacheContent<Operation>();
+            let cacheContent = new BaseCacheContent<Operation>();
             cacheContent.get(service.getValue.bind(service, 0) as Executable<Operation>).subscribe(v => {
                 assert.notEqual(v, cacheContent.value);
                 done();
