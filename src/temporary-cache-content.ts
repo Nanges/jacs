@@ -7,7 +7,7 @@ export class TemporaryCacheContent<T> extends BaseCacheContent<T>{
     /**
      *
      */
-    constructor(private maxAge:number = 300000, _value:T = null) {
+    constructor(private readonly maxAge:number = 300000, _value:T = null) {
         super(_value);
     }
 
