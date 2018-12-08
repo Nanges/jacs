@@ -5,7 +5,7 @@ import { MockService, Operation } from './mock-service';
 import { Executable } from 'src/executable';
 import { Subject, Subscription } from 'rxjs';
 
-describe('Cache content', () => {
+describe('Base cache content', () => {
     let cacheContent: BaseCacheContent<Operation>;
     let service: MockService;
 

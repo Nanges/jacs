@@ -4,11 +4,14 @@ import { Executable } from './executable';
 import { cloneDeep } from 'lodash';
 
 export class BaseCacheContent<T> {
-    private _valid: boolean;
+    protected _valid: boolean = false;
     private src$: Observable<T>;
+    private _value:T;
 
-    constructor(private _value: T = null) {
-        this._valid = this._value != null;
+    constructor(value: T = null) {
+        if(value){
+            this.updateCache(value);
+        }
     }
 
     /**
@@ -57,7 +60,7 @@ export class BaseCacheContent<T> {
         );
     }
 
-    private updateCache(content: T) {
+    protected updateCache(content: T) {
         this._value = content;
         this._valid = true;
         this.src$ = null;

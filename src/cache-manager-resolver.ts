@@ -1,8 +1,8 @@
-import { CacheManager } from "./cache-manager";
+import { BaseCacheManager } from "./base-cache-manager";
 
-export type CacheManagerFactory = (c?:any) => CacheManager;
+export type CacheManagerFactory = (c?:any) => BaseCacheManager;
 export class CacheManagerResolver{
-    
+
     private static _factory: CacheManagerFactory;
 
     static set factory(f: CacheManagerFactory){
