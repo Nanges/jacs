@@ -30,10 +30,15 @@ describe('Cache content', () => {
 
             cacheContent
                 .get(call1)
-                .pipe(switchMap(() => cacheContent.get(call2)))
+                .pipe(switchMap(v => {
+                    assert.isTrue(cacheContent.valid);
+                    assert.equal(v.data.name, 'John');
+                    return cacheContent.get(call2);
+                }))
                 .subscribe(v => {
                     assert.notEqual(v.data.name, 'Jack');
                     assert.equal(v.data.name, 'John');
+                    assert.equal(v.id, 1)
                     done();
                 });
         });
@@ -46,7 +51,12 @@ describe('Cache content', () => {
 
             const emitter = new Subject();
 
-            emitter.pipe(switchMap(() => cacheContent.get(source))).subscribe(v => {
+            emitter.pipe(
+                switchMap(() => {
+                    assert.isFalse(cacheContent.valid);
+                    return cacheContent.get(source)
+                })
+            ).subscribe(v => {
                 assert.equal(v.id, 2);
                 done();
             });
@@ -83,7 +93,7 @@ describe('Cache content', () => {
             const emitter = new Subject();
 
             emitter.pipe(switchMap(() => cacheContent.get(call))).subscribe(v => {
-                assert.equal(v.id, 2);
+                assert.equal(v.id, 1);
                 done();
             });
 
@@ -120,13 +130,13 @@ describe('Cache content', () => {
             // switch
             setTimeout(() => {
                 emitter.next(0);
-                assert.equal(service.counter, 2);
+                assert.equal(service.counter, 1);
             }, 50);
 
             // cancel
             setTimeout(() => {
                 subscription.unsubscribe();
-                assert.equal(service.counter, 2);
+                assert.equal(service.counter, 1);
                 done();
             }, 75);
         });
@@ -140,14 +150,17 @@ describe('Cache content', () => {
             cacheContent
                 .get(call1)
                 .pipe(
-                    concatMap(() => {
+                    switchMap(() => {
                         cacheContent.invalidate();
+                        assert.isFalse(cacheContent.valid);
                         return cacheContent.get(call2);
                     })
                 )
                 .subscribe(v => {
                     assert.notEqual(v.data.name, 'John');
                     assert.equal(v.data.name, 'Jack');
+                    assert.equal(v.id, 2);
+                    assert.isTrue(cacheContent.valid);
                     done();
                 });
         });
@@ -156,9 +169,14 @@ describe('Cache content', () => {
     describe('default cache', () => {
         it('use default value', done => {
             let cacheContent = new CacheContent<string | Operation>('foo');
+            assert.isTrue(cacheContent.valid);
+            assert.equal(cacheContent.value, 'foo');
+
+
             cacheContent.get(service.getValue.bind(service, 0) as Executable<string | Operation>).subscribe(v => {
                 assert.notEqual(v, 'bar');
                 assert.equal(v, 'foo');
+                assert.equal(service.counter, 0);
                 done();
             });
         });
