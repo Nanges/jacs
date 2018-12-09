@@ -1,8 +1,12 @@
 import { BaseCacheContent } from "./base-cache-content";
 
-export class TemporaryCacheContent<T> extends BaseCacheContent<T>{
+export class TimeoutCacheContent<T> extends BaseCacheContent<T>{
 
-    private lastUpdate:number;
+    private _lastUpdate:number;
+
+    get lastUpdate(){
+        return this._lastUpdate;
+    }
 
     /**
      *
@@ -11,12 +15,12 @@ export class TemporaryCacheContent<T> extends BaseCacheContent<T>{
         super(_value);
     }
 
-    get valid(){
-        return (Date.now() - this.lastUpdate) < this.maxAge && this._valid;
+    protected isValid(){
+        return (Date.now() - this._lastUpdate) < this.maxAge && super.isValid();
     }
 
     protected updateCache(content: T){
         super.updateCache(content);
-        this.lastUpdate = Date.now();
+        this._lastUpdate = Date.now();
     }
 }

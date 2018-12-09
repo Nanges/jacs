@@ -4,7 +4,7 @@ import { Executable } from './executable';
 import { cloneDeep } from 'lodash';
 
 export class BaseCacheContent<T> {
-    protected _valid: boolean = false;
+    private _valid: boolean = false;
     private src$: Observable<T>;
     private _value:T;
 
@@ -25,7 +25,7 @@ export class BaseCacheContent<T> {
      *
      */
     get valid(): boolean {
-        return this._valid;
+        return this.isValid();
     }
 
     /**
@@ -52,17 +52,20 @@ export class BaseCacheContent<T> {
         this._valid = false;
     }
 
+    protected updateCache(content: T) {
+        this._value = content;
+        this._valid = true;
+        this.src$ = null;
+    }
+
+    protected isValid(): boolean {
+        return this._valid;
+    }
 
     private makeSrc$(fallback: Executable<T>):Observable<T> {
         return fallback().pipe(
             tap(c => this.updateCache(c)),
             share()
         );
-    }
-
-    protected updateCache(content: T) {
-        this._value = content;
-        this._valid = true;
-        this.src$ = null;
     }
 }

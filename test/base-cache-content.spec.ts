@@ -1,6 +1,6 @@
 import { assert } from 'chai';
 import { BaseCacheContent } from '../src/base-cache-content';
-import { delay, switchMap, concatMap } from 'rxjs/operators';
+import { switchMap } from 'rxjs/operators';
 import { MockService, Operation } from './mock-service';
 import { Executable } from 'src/executable';
 import { Subject, Subscription } from 'rxjs';
