@@ -3,11 +3,11 @@ import { switchMap } from 'rxjs/operators';
 import { MockService, Operation } from './mock-service';
 import { Executable } from 'src/executable';
 import { Subject, Subscription } from 'rxjs';
-import { TimeoutCacheContent } from '../src/temporary-cache-content';
+import { TimeoutCacheContent } from '../src/timeout-cache-content';
 
 
 
-describe('Temporary cache content', function(){
+describe('Timeout cache content', function(){
     let cacheContent: TimeoutCacheContent<Operation>;
     let service: MockService;
 
