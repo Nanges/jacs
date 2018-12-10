@@ -49,11 +49,24 @@ describe('Default cache manager', function() {
             mngr.execute(call, [0]).subscribe();
             mngr.execute(call1, [1]).subscribe();
             mngr.execute(call2, [2]).subscribe();
+            mngr.execute(call, [0]).subscribe();
 
             assert.equal(mngr.map.size, 2);
-            assert.isFalse(mngr.map.has('[0]'));
-            assert.isTrue(mngr.map.has('[1]'));
+            assert.isTrue(mngr.map.has('[0]'));
+            assert.isFalse(mngr.map.has('[1]'));
             assert.isTrue(mngr.map.has('[2]'));
+        });
+    });
+
+    describe('Subject invalidation', () => {
+        it('should invalidate entries if subject emit on the right keywords', () => {
+            const call = service.getValue.bind(service, 0) as Executable<Operation>;
+
+            mngr.execute(call, [0]).subscribe();
+            DefaultCacheManager.notifier().next('FOO');
+            assert.isTrue(mngr.map.get('[0]').valid);
+            DefaultCacheManager.notifier().next('VALUE_CHANGES');
+            assert.isFalse(mngr.map.get('[0]').valid);
         });
     });
 });
