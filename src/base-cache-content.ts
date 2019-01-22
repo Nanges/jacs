@@ -35,7 +35,7 @@ export class BaseCacheContent<T> {
     public get(fallback: Executable<T>): Observable<T> {
         return Observable.create((o: Observer<T>) => {
             if (this.valid) {
-                o.next(this._value);
+                o.next(this.value);
                 o.complete();
                 return;
             }
