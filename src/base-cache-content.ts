@@ -53,7 +53,7 @@ export class BaseCacheContent<T> {
     }
 
     protected updateCache(content: T) {
-        this._value = content;
+        this._value = cloneDeep(content);
         this._valid = true;
         this.src$ = null;
     }
