@@ -1,8 +1,5 @@
 import { assert } from 'chai';
-import { switchMap } from 'rxjs/operators';
 import { MockService, Operation } from './mock-service';
-import { Executable } from 'src/executable';
-import { Subject, Subscription } from 'rxjs';
 import { TimeoutCacheContent } from '../src/timeout-cache-content';
 
 
