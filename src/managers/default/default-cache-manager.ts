@@ -1,25 +1,65 @@
-import { Observable } from "rxjs";
-import { Executable } from "src/executable";
-import { DefaultCacheConfig } from "./default-cache-config";
-import { BaseCacheContent } from "../../base-cache-content";
+import { Observable, Subject } from 'rxjs';
+import { cloneDeep } from 'lodash';
+import { Executable } from '../../executable';
+import { DefaultCacheConfig } from './default-cache-config';
+import { TimeoutCacheContent } from '../../timeout-cache-content';
+import { BaseCacheManager } from '../../base-cache-manager';
+import { filter } from 'rxjs/operators';
 
-const defaultConfig: DefaultCacheConfig = {
-  MAX_AGE: 300000 //5 min
-};
+export class DefaultCacheManager extends BaseCacheManager {
+    private _config: DefaultCacheConfig;
+    private _map = new Map<string, TimeoutCacheContent<any>>();
+    private _stack: string[] = [];
+    private static _notifier: Subject<string>;
 
-export class DefaultCacheManager {
-  /**
-   *
-   */
-  constructor(private config: DefaultCacheConfig = defaultConfig) {}
+    public static notifier() {
+        if (!DefaultCacheManager._notifier) {
+            DefaultCacheManager._notifier = new Subject<string>();
+        }
 
-  setup(config: DefaultCacheConfig) {
-    Object.assign(this.config, config);
-  }
+        return DefaultCacheManager._notifier;
+    }
 
-  execute<T>(executable: Executable<T>, args: any[]): Observable<T> {
-    const cC = new BaseCacheContent();
-    cC.get(undefined);
-    return null;
-  }
+    /**
+     *
+     */
+    get map(): Map<string, TimeoutCacheContent<any>> {
+        return cloneDeep(this._map);
+    }
+
+    /**
+     *
+     */
+    constructor(config?: DefaultCacheConfig) {
+        super();
+        this._config = Object.assign(new DefaultCacheConfig(), config);
+
+        if (this._config.invalidateOn.length) {
+            DefaultCacheManager.notifier()
+                .pipe(filter(v => this._config.invalidateOn.indexOf(v) > -1))
+                .subscribe(v => {
+                    this._map.forEach(cC => cC.invalidate());
+                });
+        }
+    }
+
+    execute<T>(executable: Executable<T>, args: any[]): Observable<T> {
+        const key = JSON.stringify(args);
+
+        // clean the stack
+        this.manageStack(key);
+
+        if (!this._map.has(key)) {
+            this._map.set(key, new TimeoutCacheContent(this._config.maxAge));
+        }
+
+        const cC = this._map.get(key);
+        return cC.get(executable);
+    }
+
+    private manageStack(key: string) {
+        this._stack.unshift(key);
+        // remove keys
+        this._stack.splice(this._config.maxStack).forEach(k => this._map.delete(k));
+    }
 }

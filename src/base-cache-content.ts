@@ -1,15 +1,15 @@
-import { Observable, of, Subject, Subscription, Observer, race } from 'rxjs';
-import { tap, switchMap, finalize, takeUntil, share } from 'rxjs/operators';
+import { Observable, Observer } from 'rxjs';
+import { tap, share } from 'rxjs/operators';
 import { Executable } from './executable';
 import { cloneDeep } from 'lodash';
 
 export class BaseCacheContent<T> {
     private _valid: boolean = false;
     private src$: Observable<T>;
-    private _value:T;
+    private _value: T;
 
     constructor(value: T = null) {
-        if(value){
+        if (value) {
             this.updateCache(value);
         }
     }
@@ -34,8 +34,8 @@ export class BaseCacheContent<T> {
      */
     public get(fallback: Executable<T>): Observable<T> {
         return Observable.create((o: Observer<T>) => {
-            if(this.valid){
-                o.next(this._value);
+            if (this.valid) {
+                o.next(this.value);
                 o.complete();
                 return;
             }
@@ -53,7 +53,7 @@ export class BaseCacheContent<T> {
     }
 
     protected updateCache(content: T) {
-        this._value = content;
+        this._value = cloneDeep(content);
         this._valid = true;
         this.src$ = null;
     }
@@ -62,7 +62,7 @@ export class BaseCacheContent<T> {
         return this._valid;
     }
 
-    private makeSrc$(fallback: Executable<T>):Observable<T> {
+    private makeSrc$(fallback: Executable<T>): Observable<T> {
         return fallback().pipe(
             tap(c => this.updateCache(c)),
             share()
