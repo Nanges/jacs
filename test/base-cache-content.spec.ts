@@ -1,9 +1,9 @@
 import { assert } from 'chai';
 import { BaseCacheContent } from '../src/base-cache-content';
-import { switchMap } from 'rxjs/operators';
+import { switchMap, delay } from 'rxjs/operators';
 import { MockService, Operation } from './mock-service';
 import { Executable } from 'src/executable';
-import { Subject, Subscription } from 'rxjs';
+import { Subject, Subscription, of } from 'rxjs';
 
 describe('Base cache content', () => {
     let cacheContent: BaseCacheContent<Operation>;
@@ -30,36 +30,60 @@ describe('Base cache content', () => {
 
             cacheContent
                 .get(call1)
-                .pipe(switchMap(v => {
-                    assert.isTrue(cacheContent.valid);
-                    assert.equal(v.data.name, 'John');
-                    return cacheContent.get(call2);
-                }))
+                .pipe(
+                    switchMap(v => {
+                        assert.isTrue(cacheContent.valid);
+                        assert.equal(v.data.name, 'John');
+                        return cacheContent.get(call2);
+                    })
+                )
                 .subscribe(v => {
                     assert.notEqual(v.data.name, 'Jack');
                     assert.equal(v.data.name, 'John');
-                    assert.equal(v.id, 1)
+                    assert.equal(v.id, 1);
                     done();
                 });
         });
     });
 
     describe('inflight observable and subscription features', () => {
+        it('should clone the value', done => {
+            const executable = () => of(['z', 'a', 'b', 'y']).pipe(delay(10));
+            const cc = new BaseCacheContent<string[]>();
+
+            cc.get(executable).subscribe(v => {
+                v.sort();
+                assert.deepEqual(v, ['a', 'b', 'y', 'z']);
+            });
+
+            cc.get(executable).subscribe(v => {
+                v.shift();
+                assert.deepEqual(v, ['a', 'b', 'y']);
+            });
+
+            cc.get(executable).subscribe(v => {
+                assert.deepEqual(v, ['z', 'a', 'b', 'y']);
+                done();
+            });
+        });
+
         it('should work with switchMap', done => {
             // source with a delay of 10ms
             const source = service.getValue.bind(service, 1, 10) as Executable<Operation>;
 
             const emitter = new Subject();
 
-            emitter.pipe(
-                switchMap(() => {
-                    assert.isFalse(cacheContent.valid);
-                    return cacheContent.get(source)
-                })
-            ).subscribe(v => {
-                assert.equal(v.id, 2);
-                done();
-            });
+            emitter
+                .pipe(
+                    switchMap(() => {
+                        assert.isFalse(cacheContent.valid);
+                        return cacheContent.get(source);
+                    })
+                )
+                .subscribe(v => {
+                    assert.equal(v.id, 2);
+                    done();
+                });
 
             emitter.next(0);
             setTimeout(() => {
@@ -104,9 +128,13 @@ describe('Base cache content', () => {
             });
 
             emitter.next(0);
-            setTimeout(() => cacheContent.get(call).subscribe(v => {
-                assert.equal(v.id, 1);
-            }), 5);
+            setTimeout(
+                () =>
+                    cacheContent.get(call).subscribe(v => {
+                        assert.equal(v.id, 1);
+                    }),
+                5
+            );
             setTimeout(() => emitter.next(0), 50);
         });
 
@@ -134,7 +162,7 @@ describe('Base cache content', () => {
 
             // 2nd call (inflight)
             setTimeout(() => {
-                subscription = cacheContent.get(call).subscribe()
+                subscription = cacheContent.get(call).subscribe();
                 assert.equal(service.counter, 1);
             }, 25);
 
@@ -182,7 +210,6 @@ describe('Base cache content', () => {
             let cacheContent = new BaseCacheContent<string | Operation>('foo');
             assert.isTrue(cacheContent.valid);
             assert.equal(cacheContent.value, 'foo');
-
 
             cacheContent.get(service.getValue.bind(service, 0) as Executable<string | Operation>).subscribe(v => {
                 assert.notEqual(v, 'bar');

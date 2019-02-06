@@ -1,5 +1,5 @@
 import { Observable, Observer } from 'rxjs';
-import { tap, share } from 'rxjs/operators';
+import { tap, share, map } from 'rxjs/operators';
 import { Executable } from './executable';
 import { cloneDeep } from 'lodash';
 
@@ -53,7 +53,7 @@ export class BaseCacheContent<T> {
     }
 
     protected updateCache(content: T) {
-        this._value = cloneDeep(content);
+        this._value = content;
         this._valid = true;
         this.src$ = null;
     }
@@ -65,7 +65,9 @@ export class BaseCacheContent<T> {
     private makeSrc$(fallback: Executable<T>): Observable<T> {
         return fallback().pipe(
             tap(c => this.updateCache(c)),
-            share()
+            share(),
+            // clone the content to preserve immutability between subscribers
+            map(c => cloneDeep(c))
         );
     }
 }
